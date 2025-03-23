@@ -102,6 +102,6 @@ if __name__ == "__main__":
                       standardize_returns=True,
                       standardize_obs=False,
                       save_every_ts=100_000,
-                      timestep_limit=1_000_000_000,
+                      timestep_limit=1_000_000_000_000_000,
                       log_to_wandb=True)
     learner.learn()
