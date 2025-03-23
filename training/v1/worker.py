@@ -4,22 +4,82 @@ from rlgym_ppo.util import MetricsLogger
 
 
 
+avg_goals_last = 0  # Initialize it outside the class scope (global)
+
 class ExampleLogger(MetricsLogger):
     def _collect_metrics(self, game_state: GameState) -> list:
-        return [game_state.players[0].car_data.linear_velocity,
+        return [
+                game_state.players[0].car_data.linear_velocity,
                 game_state.players[0].car_data.rotation_mtx(),
-                game_state.orange_score]
+                game_state.orange_score,  # Orange team's score
+                game_state.players[0].boost_amount,  # Player's boost amount (fixed reference)
+                game_state.players[0].on_ground,  # Whether the player is on the ground
+                game_state.players[0].match_goals,  # Goals scored by the player
+                game_state.players[0].match_demolishes,  # Demolitions caused by the player
+                game_state.players[0].ball_touched, # Touched the ball
+                game_state.ball.linear_velocity,  # Ball's linear velocity
+                game_state.players[0].match_saves # Saves
+               ]
 
     def _report_metrics(self, collected_metrics, wandb_run, cumulative_timesteps):
-        avg_linvel = np.zeros(3)
+        global avg_goals_last  # Referencing the global variable
+
+        avg_car_vel = 0
+        avg_ball_vel = 0
+        avg_goals = 0
+        avg_goals_increase = 0
+        avg_boost = 0
+        avg_airtime = 0
+        avg_demos = 0
+        avg_touches = 0
+        avg_saves = 0
+
         for metric_array in collected_metrics:
-            p0_linear_velocity = metric_array[0]
-            avg_linvel += p0_linear_velocity
-        avg_linvel /= len(collected_metrics)
-        report = {"x_vel":avg_linvel[0],
-                  "y_vel":avg_linvel[1],
-                  "z_vel":avg_linvel[2],
-                  "Cumulative Timesteps":cumulative_timesteps}
+            car_velocity = metric_array[0]
+            car_vel_magnitude = np.linalg.norm(car_velocity)
+            avg_car_vel += car_vel_magnitude
+
+            avg_boost += metric_array[3]
+            avg_airtime += 1 - metric_array[4]
+            avg_goals += metric_array[5]
+            avg_demos += metric_array[6]
+            avg_touches += metric_array[7]
+
+            ball_velocity = metric_array[8]
+            ball_vel_magnitude = np.linalg.norm(ball_velocity)
+            avg_ball_vel += ball_vel_magnitude
+
+            avg_saves += metric_array[9]
+
+        avg_car_vel /= len(collected_metrics)
+        avg_ball_vel /= len(collected_metrics)
+        avg_boost /= len(collected_metrics)
+        avg_airtime /= len(collected_metrics)
+        avg_goals /= len(collected_metrics)
+        avg_demos /= len(collected_metrics)
+        avg_touches /= len(collected_metrics)
+        avg_saves /= len(collected_metrics)
+
+        # Ensure avg_goals_last is initialized before using it
+        avg_goals_increase = avg_goals - avg_goals_last
+        avg_goals_last = avg_goals  # Update avg_goals_last for future use
+
+        avg_boost_big = avg_boost * 1000
+
+        report = {
+            "average player speed": avg_car_vel,
+            "average ball speed": avg_ball_vel,
+            "average boost": avg_boost,
+            "average boost 0-1000": avg_boost_big,
+            "average airtime": avg_airtime,
+            "average goals": avg_goals,
+            "average demos": avg_demos,
+            "ball touch ratio": avg_touches,
+            "Cumulative Timesteps": cumulative_timesteps,
+            "average goals increase": avg_goals_increase,
+            "average saves": avg_saves
+        }
+
         wandb_run.log(report)
 
 
