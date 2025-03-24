@@ -80,12 +80,12 @@ def build_rocketsim_env(): # build our environment
     concede_reward = -goal_reward * (1 - aggression_bias)
 
     reward_fn = LogCombinedReward.from_zipped(
-                #(EventReward(team_goal=1, concede=-1), 20), # Different event reward.
-                (TouchBallRewardScaledByHitForce(), 1),
-                #(VelocityBallToGoalReward(), 2),
-                (SpeedTowardBallReward(), 5), # Move towards the ball!
-                (FaceBallReward(), 1), # Make sure we don't start driving backward at the ball
-                (InAirReward(), 0.15) # Make sure we don't forget how to jump
+                (EventReward(team_goal=1, concede=-1), 20), # Different event reward.
+                (TouchBallRewardScaledByHitForce(), 2),
+                (VelocityBallToGoalReward(), 2),
+                (SpeedTowardBallReward(), 1), # Move towards the ball!
+                (FaceBallReward(), 0.1), # Make sure we don't start driving backward at the ball
+                (InAirReward(), 0.2) # Make sure we don't forget how to jump
     )
     global g_combined_reward
     g_combined_reward = reward_fn
@@ -133,7 +133,7 @@ if __name__ == "__main__":
                       ts_per_iteration=100_000, 
                       exp_buffer_size=150_000,
                       policy_lr=2e-4, # change these according to the guide, KEEP THEM THE SAME UNLESS YOU KNOW WHAT YOU'RE DOING.
-                      critic_lr=7e-4, # 7e-4 for a brand new bot, 
+                      critic_lr=3e-4, # 7e-4 for a brand new bot, 
                                       # 3e-4 when your bot starts chasing the ball and hitting it, 
                                       # 2e-4 when it starts trying to score
                                       # 1e-4 for advanced outplay mechs.
