@@ -82,10 +82,10 @@ def build_rocketsim_env(): # build our environment
     reward_fn = LogCombinedReward.from_zipped(
                 (EventReward(team_goal=1, concede=-1), 20), # Different event reward.
                 (TouchBallRewardScaledByHitForce(), 2),
-                (VelocityBallToGoalReward(), 2),
-                (SpeedTowardBallReward(), 1), # Move towards the ball!
+                (VelocityBallToGoalReward(), 3),
+                (SpeedTowardBallReward(), 1.5), # Move towards the ball!
                 (FaceBallReward(), 0.1), # Make sure we don't start driving backward at the ball
-                (InAirReward(), 0.2) # Make sure we don't forget how to jump
+                (InAirReward(), 0.05) # Make sure we don't forget how to jump
     )
     global g_combined_reward
     g_combined_reward = reward_fn
