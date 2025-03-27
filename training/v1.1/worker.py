@@ -65,8 +65,9 @@ def build_rocketsim_env(): # build our environment
     from custom_rewards import SpeedTowardBallReward, TouchBallRewardScaledByHitForce, SpeedflipKickoffReward, AerialDistanceReward, PlayerOnWallReward, LavaFloorReward, InAirReward
     from custom_state_setters import WeightedSampleSetter, WallPracticeState, TeamSizeSetter
     from custom_combinedreward import LogCombinedReward
+    from extra_state_setters.replay_setter import ReplaySetter
     spawn_opponents = True # Whether you want opponents or not, set to False if you're practicing hyperspecific scenarios. The opponent is your own bot, so it plays against itself. Used to be called self_play in the old days.
-    team_size = 3 # How many bots per team.
+    team_size = 1 # How many bots per team.
     game_tick_rate = 120
     tick_skip = 8 # How long we hold an action before taking a new action, in ticks.
     timeout_seconds = 15
@@ -80,21 +81,21 @@ def build_rocketsim_env(): # build our environment
     concede_reward = -goal_reward * (1 - aggression_bias)
 
     reward_fn = LogCombinedReward.from_zipped(
-                (EventReward(team_goal=1, concede=-1), 20), # Different event reward.
-                (TouchBallRewardScaledByHitForce(), 2),
-                (VelocityBallToGoalReward(), 3),
-                (SpeedTowardBallReward(), 1.5), # Move towards the ball!
-                (FaceBallReward(), 0.1), # Make sure we don't start driving backward at the ball
-                (InAirReward(), 0.05) # Make sure we don't forget how to jump
+                #(EventReward(team_goal=1, concede=-1), 20), # Different event reward.
+                (TouchBallRewardScaledByHitForce(), 50),
+                #(VelocityBallToGoalReward(), 5),
+                (SpeedTowardBallReward(), 5), # Move towards the ball!
+                (FaceBallReward(), 1), # Make sure we don't start driving backward at the ball
+                (InAirReward(), 0.15) # Make sure we don't forget how to jump
     )
     global g_combined_reward
     g_combined_reward = reward_fn
     obs_builder = AdvancedObs()
     
-    state_setter = WeightedSampleSetter.from_zipped(
-        (TeamSizeSetter(),1)
+    #state_setter = WeightedSampleSetter.from_zipped(
+        #(TeamSizeSetter(),1)
 
-    ) 
+    #) 
     # Pre-set according to the guide, ordered in random ball velocity, random car velocity and whether the cars will be on the ground.
 
     env = rlgym_sim.make(tick_skip=tick_skip,
@@ -104,7 +105,7 @@ def build_rocketsim_env(): # build our environment
                          reward_fn=reward_fn,
                          obs_builder=obs_builder,
                          action_parser=action_parser,
-                         state_setter=state_setter)
+                         state_setter=WeightedSampleSetter([RandomState(ball_rand_speed=True,cars_rand_speed=True,cars_on_ground=False),RandomState(ball_rand_speed=True,cars_rand_speed=True,cars_on_ground=True),ReplaySetter("ssl_1v1.npy"),], [5,5,2]),)
     
     import rocketsimvis_rlgym_sim_client as rsv
     type(env).render = lambda self: rsv.send_state_to_rocketsimvis(self._prev_state)
