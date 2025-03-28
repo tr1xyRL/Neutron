@@ -151,7 +151,7 @@ if __name__ == "__main__":
                       save_every_ts=100_000,
                       timestep_limit=1e69, # how many timesteps until it's supposed to stop learning, currently 1 billion by default.
                       log_to_wandb=True, # True if you want to log to Weights And Biases, keep False otherwise.
-                      wandb_run_name="Neutron v1.1", # Name of your Weights And Biases run.
+                      wandb_run_name="Neutron v1.1 model 02", # Name of your Weights And Biases run.
                       wandb_project_name="Neutron", # Name of your Weights And Biases project.
                       wandb_group_name="trickyspline" # Name of the Weights And Biases project group.
                       )
